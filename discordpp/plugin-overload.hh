@@ -4,10 +4,15 @@
 
 #pragma once
 
+#include <discordpp/botStruct.hh>
+
 namespace discordpp{
 	template<class BASE>
 	class PluginOverload: public BASE, virtual BotStruct{
 	public:
+		using BASE::call;
+		using BASE::send;
+		
 		virtual void call(
 				const std::string &requestType,
 				const std::string &targetURL
