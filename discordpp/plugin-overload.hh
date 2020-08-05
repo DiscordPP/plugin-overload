@@ -4,10 +4,15 @@
 
 #pragma once
 
+#include <discordpp/botStruct.hh>
+
 namespace discordpp{
 	template<class BASE>
 	class PluginOverload: public BASE, virtual BotStruct{
 	public:
+		using BASE::call;
+		using BASE::send;
+		
 		virtual void call(
 				const std::string &requestType,
 				const std::string &targetURL
@@ -15,6 +20,7 @@ namespace discordpp{
 			BASE::call(
 					std::make_shared<std::string>(requestType),
 					std::make_shared<std::string>(targetURL),
+					nullptr,
 					nullptr,
 					nullptr
 			);
@@ -29,6 +35,7 @@ namespace discordpp{
 					std::make_shared<std::string>(requestType),
 					std::make_shared<std::string>(targetURL),
 					std::make_shared<json>(body),
+					nullptr,
 					nullptr
 			);
 		};
@@ -36,13 +43,28 @@ namespace discordpp{
 		virtual void call(
 				const std::string &requestType,
 				const std::string &targetURL,
-				const std::function<void(const json)> &callback
+				const handleWrite &onWrite
 		){
 			BASE::call(
 					std::make_shared<std::string>(requestType),
 					std::make_shared<std::string>(targetURL),
 					nullptr,
-					std::make_shared<std::function<void(const json)>>(callback)
+					std::make_shared<handleWrite>(onWrite),
+					nullptr
+			);
+		};
+
+		virtual void call(
+				const std::string &requestType,
+				const std::string &targetURL,
+				const handleRead &onRead
+		){
+			BASE::call(
+					std::make_shared<std::string>(requestType),
+					std::make_shared<std::string>(targetURL),
+					nullptr,
+					nullptr,
+					std::make_shared<handleRead>(onRead)
 			);
 		};
 
@@ -50,37 +72,46 @@ namespace discordpp{
 				const std::string &requestType,
 				const std::string &targetURL,
 				const json &body,
-				const std::function<void(const json)> &callback
+				const handleWrite &onWrite
 		){
 			BASE::call(
 					std::make_shared<std::string>(requestType),
 					std::make_shared<std::string>(targetURL),
 					std::make_shared<json>(body),
-					std::make_shared<std::function<void(const json)>>(callback)
+					std::make_shared<handleWrite>(onWrite),
+					nullptr
 			);
 		};
 
 		virtual void call(
-				sptr<const std::string> requestType,
-				sptr<const std::string> targetURL
+				const std::string &requestType,
+				const std::string &targetURL,
+				const json &body,
+				const handleRead &onRead
 		){
-			BASE::call(std::move(requestType), std::move(targetURL), nullptr, nullptr);
+			BASE::call(
+					std::make_shared<std::string>(requestType),
+					std::make_shared<std::string>(targetURL),
+					std::make_shared<json>(body),
+					nullptr,
+					std::make_shared<handleRead>(onRead)
+			);
 		};
 
 		virtual void call(
-				sptr<const std::string> requestType,
-				sptr<const std::string> targetURL,
-				sptr<const json> body
+				const std::string &requestType,
+				const std::string &targetURL,
+				const json &body,
+				const handleWrite &onWrite,
+				const handleRead &onRead
 		){
-			BASE::call(std::move(requestType), std::move(targetURL), std::move(body), nullptr);
-		};
-
-		virtual void call(
-				sptr<const std::string> requestType,
-				sptr<const std::string> targetURL,
-				sptr<const std::function<void(const json)>> callback
-		){
-			BASE::call(std::move(requestType), std::move(targetURL), nullptr, std::move(callback));
+			BASE::call(
+					std::make_shared<std::string>(requestType),
+					std::make_shared<std::string>(targetURL),
+					std::make_shared<json>(body),
+					std::make_shared<handleWrite>(onWrite),
+					std::make_shared<handleRead>(onRead)
+			);
 		};
 
 		virtual void send(const int opcode){
@@ -91,20 +122,20 @@ namespace discordpp{
 			BASE::send(opcode, std::make_shared<json>(payload), nullptr);
 		};
 
-		virtual void send(const int opcode, const std::function<void()> &callback){
-			BASE::send(opcode, nullptr, std::make_shared<const std::function<void()>>(callback));
+		virtual void send(const int opcode, const handleSent &onRead){
+			BASE::send(opcode, nullptr, std::make_shared<const handleSent>(onRead));
 		};
 
-		virtual void send(const int opcode, const json &payload, const std::function<void()> &callback){
-			BASE::send(opcode, std::make_shared<json>(payload), std::make_shared<const std::function<void()>>(callback));
+		virtual void send(const int opcode, const json &payload, const handleSent &onRead){
+			BASE::send(opcode, std::make_shared<json>(payload), std::make_shared<const handleSent>(onRead));
 		};
 
 		virtual void send(const int opcode, sptr<const json> payload){
 			BASE::send(opcode, std::move(payload), nullptr);
 		};
 
-		virtual void send(const int opcode, sptr<const std::function<void()>> callback){
-			BASE::send(opcode, nullptr, std::move(callback));
+		virtual void send(const int opcode, sptr<const handleSent> onRead){
+			BASE::send(opcode, nullptr, std::move(onRead));
 		};
 	};
 }
